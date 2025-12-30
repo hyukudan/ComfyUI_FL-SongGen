@@ -1,0 +1,23 @@
+[project]
+name = "comfyui-fl-songgen"
+version = "1.0.0"
+description = "FL Song Gen - AI Song Generation for ComfyUI based on Tencent's LeVo model"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Fill Labs"}
+]
+keywords = ["comfyui", "audio", "music", "song", "generation", "AI", "vocals", "lyrics"]
+
+[project.urls]
+Homepage = "https://github.com/filliptm/ComfyUI_FL-SongGen"
+Repository = "https://github.com/filliptm/ComfyUI_FL-SongGen"
+Issues = "https://github.com/filliptm/ComfyUI_FL-SongGen/issues"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
