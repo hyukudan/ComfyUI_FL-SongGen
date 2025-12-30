@@ -8,12 +8,17 @@ import os
 import sys
 import gc
 import importlib.util
+import warnings
 from pathlib import Path
 from typing import Dict, Any, Optional
 
 import torch
 import torch.nn as nn
 from omegaconf import OmegaConf
+
+# Suppress cosmetic warnings from transformers about GenerationMixin and checkpointing format
+warnings.filterwarnings("ignore", message=".*GenerationMixin.*")
+warnings.filterwarnings("ignore", message=".*old version of the checkpointing format.*")
 
 # Get the fl_utils directory (same directory as this file)
 _FL_UTILS_DIR = os.path.dirname(__file__)
