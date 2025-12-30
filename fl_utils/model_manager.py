@@ -563,6 +563,44 @@ def _load_full_model(
     return model_info
 
 
+def _download_demucs_model() -> bool:
+    """
+    Download Demucs htdemucs model from HuggingFace.
+
+    Returns:
+        True if download successful
+    """
+    try:
+        from huggingface_hub import hf_hub_download
+    except ImportError:
+        print("[FL SongGen] ERROR: huggingface_hub not installed.")
+        return False
+
+    demucs_dir = get_demucs_dir()
+    demucs_dir.mkdir(parents=True, exist_ok=True)
+    dm_model_path = demucs_dir / "htdemucs.pth"
+
+    if dm_model_path.exists():
+        return True
+
+    print("[FL SongGen] Downloading Demucs model for audio separation...")
+    print("[FL SongGen] This is required for style transfer functionality.")
+
+    try:
+        # Download from the SongGeneration-Runtime repo which has demucs
+        hf_hub_download(
+            repo_id=CHECKPOINTS_HF_REPO,
+            filename="ckpt/demucs/htdemucs.pth",
+            local_dir=str(get_songgen_models_dir()),
+            local_dir_use_symlinks=False,
+        )
+        print("[FL SongGen] Demucs model downloaded successfully!")
+        return True
+    except Exception as e:
+        print(f"[FL SongGen] ERROR downloading Demucs model: {e}")
+        return False
+
+
 def load_separator(device: str = "cuda") -> Any:
     """
     Load Demucs separator for audio source separation.
@@ -585,11 +623,13 @@ def load_separator(device: str = "cuda") -> Any:
     bundled_demucs = get_bundled_third_party_path() / "demucs" / "ckpt"
     dm_config_path = bundled_demucs / "htdemucs.yaml"
 
+    # Auto-download if missing
     if not dm_model_path.exists():
-        raise FileNotFoundError(
-            f"Demucs model not found at {dm_model_path}. "
-            "Please ensure checkpoint files are downloaded."
-        )
+        if not _download_demucs_model():
+            raise FileNotFoundError(
+                f"Demucs model not found at {dm_model_path}. "
+                "Automatic download failed. Please download manually."
+            )
 
     demucs_model = get_model_from_yaml(str(dm_config_path), str(dm_model_path))
 
