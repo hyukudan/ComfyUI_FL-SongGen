@@ -82,6 +82,7 @@ class SongGenWrapper:
         temperature: float = 0.9,
         cfg_coef: float = 1.5,
         top_k: int = 50,
+        top_p: float = 0.0,
         gen_type: str = "mixed",
         seed: int = -1,
     ) -> Tuple[dict, Optional[dict], Optional[dict]]:
@@ -97,6 +98,7 @@ class SongGenWrapper:
             temperature: Sampling temperature
             cfg_coef: Classifier-free guidance coefficient
             top_k: Top-k sampling parameter
+            top_p: Top-p (nucleus) sampling parameter (0.0 to use top_k instead)
             gen_type: "mixed", "vocal", "bgm", or "separate"
             seed: Random seed (-1 for random)
 
@@ -181,7 +183,7 @@ class SongGenWrapper:
             temperature=temperature,
             cfg_coef=cfg_coef,
             top_k=top_k,
-            top_p=0.0,
+            top_p=top_p,
             record_tokens=True,
             record_window=50
         )
@@ -358,7 +360,7 @@ class SongGenWrapper:
             temperature=temperature,
             cfg_coef=cfg_coef,
             top_k=top_k,
-            top_p=0.0,
+            top_p=top_p,
             record_tokens=True,
             record_window=50
         )

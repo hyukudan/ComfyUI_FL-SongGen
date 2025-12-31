@@ -85,6 +85,14 @@ sg_auto_style = import_module_from_path(
     "sg_auto_style",
     os.path.join(current_dir, "fl_nodes", "auto_style.py")
 )
+sg_audio_separator = import_module_from_path(
+    "sg_audio_separator",
+    os.path.join(current_dir, "fl_nodes", "audio_separator.py")
+)
+sg_advanced_generate = import_module_from_path(
+    "sg_advanced_generate",
+    os.path.join(current_dir, "fl_nodes", "advanced_generate.py")
+)
 
 # Get node classes
 FL_SongGen_ModelLoader = sg_model_loader.FL_SongGen_ModelLoader
@@ -93,6 +101,8 @@ FL_SongGen_DescriptionBuilder = sg_description_builder.FL_SongGen_DescriptionBui
 FL_SongGen_Generate = sg_generate.FL_SongGen_Generate
 FL_SongGen_StyleTransfer = sg_style_transfer.FL_SongGen_StyleTransfer
 FL_SongGen_AutoStyle = sg_auto_style.FL_SongGen_AutoStyle
+FL_SongGen_AudioSeparator = sg_audio_separator.FL_SongGen_AudioSeparator
+FL_SongGen_AdvancedGenerate = sg_advanced_generate.FL_SongGen_AdvancedGenerate
 
 # Node registration for ComfyUI
 NODE_CLASS_MAPPINGS = {
@@ -102,6 +112,8 @@ NODE_CLASS_MAPPINGS = {
     "FL_SongGen_Generate": FL_SongGen_Generate,
     "FL_SongGen_StyleTransfer": FL_SongGen_StyleTransfer,
     "FL_SongGen_AutoStyle": FL_SongGen_AutoStyle,
+    "FL_SongGen_AudioSeparator": FL_SongGen_AudioSeparator,
+    "FL_SongGen_AdvancedGenerate": FL_SongGen_AdvancedGenerate,
 }
 
 # Display names for the UI
@@ -112,10 +124,12 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "FL_SongGen_Generate": "FL Song Gen Generate",
     "FL_SongGen_StyleTransfer": "FL Song Gen Style Transfer",
     "FL_SongGen_AutoStyle": "FL Song Gen Auto Style",
+    "FL_SongGen_AudioSeparator": "FL Song Gen Audio Separator",
+    "FL_SongGen_AdvancedGenerate": "FL Song Gen Advanced Generate",
 }
 
 # Version info
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 # ASCII banner
 ascii_art = """
@@ -133,12 +147,14 @@ print(f"FL Song Gen v{__version__} - AI Song Generation for ComfyUI")
 print("Based on Tencent's SongGeneration (LeVo) model")
 print("-" * 85)
 print("Nodes loaded:")
-print("  - FL Song Gen Model Loader      : Load the song generation model")
-print("  - FL Song Gen Lyrics Formatter  : Format lyrics with section tags")
+print("  - FL Song Gen Model Loader       : Load the song generation model")
+print("  - FL Song Gen Lyrics Formatter   : Format lyrics with section tags")
 print("  - FL Song Gen Description Builder: Build style descriptions")
-print("  - FL Song Gen Generate          : Generate songs with text conditioning")
-print("  - FL Song Gen Style Transfer    : Generate songs with audio style reference")
-print("  - FL Song Gen Auto Style        : Generate songs with preset styles")
+print("  - FL Song Gen Generate           : Generate songs with text conditioning")
+print("  - FL Song Gen Style Transfer     : Generate songs with audio style reference")
+print("  - FL Song Gen Auto Style         : Generate songs with preset styles")
+print("  - FL Song Gen Audio Separator    : Separate audio into stems (vocals, drums, bass)")
+print("  - FL Song Gen Advanced Generate  : Generate with advanced sampling (top_p)")
 print("=" * 85)
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]

@@ -1,0 +1,176 @@
+"""
+FL Song Gen Audio Separator Node.
+Separate audio into stems (vocals, drums, bass, other) using Demucs.
+"""
+
+import sys
+import os
+from typing import Tuple
+import importlib.util
+
+import torch
+import torchaudio
+
+# Get the package root directory
+_PACKAGE_ROOT = os.path.dirname(os.path.dirname(__file__))
+
+# Import modules explicitly from our package to avoid conflicts
+def _import_from_package(module_name, file_name):
+    """Import a module from our package specifically."""
+    module_path = os.path.join(_PACKAGE_ROOT, "fl_utils", f"{file_name}.py")
+    spec = importlib.util.spec_from_file_location(f"songgen_{module_name}", module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+_model_manager = _import_from_package("model_manager", "model_manager")
+_audio_utils = _import_from_package("audio_utils", "audio_utils")
+
+load_separator = _model_manager.load_separator
+empty_audio = _audio_utils.empty_audio
+
+
+class FL_SongGen_AudioSeparator:
+    """
+    Separate audio into individual stems using Demucs (htdemucs model).
+
+    Outputs 4 stems: vocals, drums, bass, and other (instruments).
+    Useful for extracting vocals for remixing or isolating instrumentals.
+    """
+
+    RETURN_TYPES = ("AUDIO", "AUDIO", "AUDIO", "AUDIO")
+    RETURN_NAMES = ("vocals", "drums", "bass", "other")
+    FUNCTION = "separate"
+    CATEGORY = "FL Song Gen"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "audio": (
+                    "AUDIO",
+                    {
+                        "tooltip": "Audio to separate into stems"
+                    }
+                ),
+            },
+            "optional": {
+                "device": (
+                    ["auto", "cuda", "cpu"],
+                    {
+                        "default": "auto",
+                        "tooltip": "Device for processing (auto uses GPU if available)"
+                    }
+                ),
+            }
+        }
+
+    def separate(
+        self,
+        audio: dict,
+        device: str = "auto"
+    ) -> Tuple[dict, dict, dict, dict]:
+        """
+        Separate audio into stems.
+
+        Args:
+            audio: ComfyUI AUDIO dict with waveform and sample_rate
+            device: Processing device
+
+        Returns:
+            (vocals, drums, bass, other) as ComfyUI AUDIO dicts
+        """
+        print(f"\n{'='*60}")
+        print(f"[FL SongGen Audio Separator] Starting Separation")
+        print(f"{'='*60}")
+
+        waveform = audio["waveform"]
+        sample_rate = audio["sample_rate"]
+
+        print(f"Input: {waveform.shape}, {sample_rate}Hz")
+
+        # Determine device
+        if device == "auto":
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(f"Device: {device}")
+
+        try:
+            # Load Demucs separator
+            print("[FL SongGen] Loading Demucs separator...")
+            separator = load_separator(device=device)
+
+            # Demucs expects 44100Hz
+            target_sr = 44100
+            if sample_rate != target_sr:
+                print(f"[FL SongGen] Resampling {sample_rate}Hz -> {target_sr}Hz")
+                waveform = torchaudio.functional.resample(
+                    waveform.squeeze(0), sample_rate, target_sr
+                ).unsqueeze(0)
+
+            # Ensure stereo (Demucs expects stereo)
+            if waveform.dim() == 2:
+                waveform = waveform.unsqueeze(0)  # Add batch dim
+            if waveform.shape[1] == 1:
+                waveform = waveform.repeat(1, 2, 1)  # Mono to stereo
+
+            # Move to device
+            waveform = waveform.to(device)
+
+            # Run separation
+            print("[FL SongGen] Running separation (this may take a while)...")
+            with torch.no_grad():
+                sources = separator(waveform)
+
+            # Sources shape: [batch, num_sources, channels, samples]
+            # htdemucs sources order: drums, bass, other, vocals
+            sources = sources.squeeze(0)  # Remove batch dim
+
+            drums = sources[0]   # [channels, samples]
+            bass = sources[1]
+            other = sources[2]
+            vocals = sources[3]
+
+            # Convert back to original sample rate if needed
+            if sample_rate != target_sr:
+                print(f"[FL SongGen] Resampling back to {sample_rate}Hz")
+                vocals = torchaudio.functional.resample(vocals, target_sr, sample_rate)
+                drums = torchaudio.functional.resample(drums, target_sr, sample_rate)
+                bass = torchaudio.functional.resample(bass, target_sr, sample_rate)
+                other = torchaudio.functional.resample(other, target_sr, sample_rate)
+
+            # Move to CPU and format for ComfyUI
+            def to_audio_dict(tensor, sr):
+                return {
+                    "waveform": tensor.unsqueeze(0).cpu(),  # [1, channels, samples]
+                    "sample_rate": sr
+                }
+
+            vocals_out = to_audio_dict(vocals, sample_rate)
+            drums_out = to_audio_dict(drums, sample_rate)
+            bass_out = to_audio_dict(bass, sample_rate)
+            other_out = to_audio_dict(other, sample_rate)
+
+            print(f"\n{'='*60}")
+            print(f"[FL SongGen Audio Separator] Separation Complete!")
+            print(f"Vocals: {vocals_out['waveform'].shape}")
+            print(f"Drums: {drums_out['waveform'].shape}")
+            print(f"Bass: {bass_out['waveform'].shape}")
+            print(f"Other: {other_out['waveform'].shape}")
+            print(f"{'='*60}\n")
+
+            return (vocals_out, drums_out, bass_out, other_out)
+
+        except Exception as e:
+            print(f"\n{'='*60}")
+            print(f"[FL SongGen Audio Separator] ERROR: Separation failed!")
+            print(f"Error: {e}")
+            import traceback
+            traceback.print_exc()
+            print(f"{'='*60}\n")
+
+            return (
+                empty_audio(sample_rate),
+                empty_audio(sample_rate),
+                empty_audio(sample_rate),
+                empty_audio(sample_rate)
+            )
