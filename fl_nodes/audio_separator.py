@@ -116,8 +116,11 @@ class FL_SongGen_AudioSeparator:
             # Move to device
             waveform = waveform.to(device)
 
-            # Import apply_model from installed demucs package
-            from demucs.apply import apply_model
+            # Import apply_model from bundled demucs (in third_party)
+            # Need to add package root to path for third_party imports
+            if _PACKAGE_ROOT not in sys.path:
+                sys.path.insert(0, _PACKAGE_ROOT)
+            from third_party.demucs.models.apply import apply_model
 
             # Run separation using apply_model (not direct forward call)
             print("[FL SongGen] Running separation (this may take a while)...")
