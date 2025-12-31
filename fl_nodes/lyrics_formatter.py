@@ -3,7 +3,20 @@ FL Song Gen Lyrics Formatter Node.
 Helps users build properly formatted lyrics with section tags.
 """
 
+import re
 from typing import Tuple
+
+# Regex to filter lyrics - keeps letters, numbers, whitespace, brackets, hyphens, and CJK characters
+# Removes punctuation like commas, apostrophes, quotes, etc.
+LYRICS_FILTER_REGEX = re.compile(
+    r"[^\w\s\[\]\-\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af\u00c0-\u017f]"
+)
+
+
+def clean_lyrics_line(line: str) -> str:
+    """Clean a single lyrics line by removing unsupported punctuation."""
+    cleaned = LYRICS_FILTER_REGEX.sub("", line)
+    return cleaned.strip()
 
 
 class FL_SongGen_LyricsFormatter:
@@ -228,9 +241,14 @@ class FL_SongGen_LyricsFormatter:
         """
         Convert multiline text to SongGen format.
         Newlines become periods to separate phrases.
+        Punctuation is removed to match model training data format.
         """
-        # Split by newlines, strip each line, filter empty
-        lines = [line.strip() for line in text.strip().split("\n") if line.strip()]
+        # Split by newlines, clean each line, filter empty
+        lines = []
+        for line in text.strip().split("\n"):
+            cleaned = clean_lyrics_line(line)
+            if cleaned:
+                lines.append(cleaned)
 
-        # Join with period-space (matches original SongGeneration training data format)
-        return ". ".join(lines)
+        # Join with period only (matches official SongGeneration format)
+        return ".".join(lines)

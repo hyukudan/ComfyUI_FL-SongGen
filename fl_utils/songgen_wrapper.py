@@ -5,6 +5,7 @@ Encapsulates the inference logic from SongGeneration's generate.py.
 
 import gc
 import os
+import re
 import sys
 import tempfile
 import importlib.util
@@ -14,6 +15,12 @@ import numpy as np
 import torch
 import torchaudio
 import soundfile as sf
+
+# Regex to filter lyrics - keeps letters, numbers, whitespace, brackets, hyphens, and CJK characters
+# Removes punctuation like commas, apostrophes, quotes, etc. that the model wasn't trained on
+LYRICS_FILTER_REGEX = re.compile(
+    r"[^\w\s\[\]\-;\.\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af\u00c0-\u017f]"
+)
 
 # Get the fl_utils directory (same directory as this file)
 _FL_UTILS_DIR = os.path.dirname(__file__)
@@ -112,8 +119,9 @@ class SongGenWrapper:
             print(f"[FL SongGen] Duration {duration}s exceeds max {self.max_duration}s, clamping.")
             duration = self.max_duration
 
-        # Clean lyrics
-        lyrics = lyrics.replace("  ", " ")
+        # Clean lyrics - remove unsupported punctuation and normalize spaces
+        lyrics = LYRICS_FILTER_REGEX.sub("", lyrics)
+        lyrics = re.sub(r"\s+", " ", lyrics)  # Normalize multiple spaces to single space
 
         if self.low_mem:
             return self._generate_lowmem(
@@ -192,6 +200,16 @@ class SongGenWrapper:
             'bgm_wavs': bgm_wav,
             'melody_is_wav': melody_is_wav,
         }
+
+        # Debug: Log what we're passing to the model
+        print(f"\n[FL SongGen DEBUG] ========== GENERATION INPUT ==========")
+        print(f"[FL SongGen DEBUG] Lyrics (first 200 chars): {repr(lyrics[:200]) if lyrics else 'None'}")
+        print(f"[FL SongGen DEBUG] Description: {repr(description) if description else 'None'}")
+        print(f"[FL SongGen DEBUG] melody_wavs shape: {pmt_wav.shape if pmt_wav is not None else 'None'}")
+        print(f"[FL SongGen DEBUG] vocal_wavs shape: {vocal_wav.shape if vocal_wav is not None else 'None'}")
+        print(f"[FL SongGen DEBUG] bgm_wavs shape: {bgm_wav.shape if bgm_wav is not None else 'None'}")
+        print(f"[FL SongGen DEBUG] melody_is_wav: {melody_is_wav}")
+        print(f"[FL SongGen DEBUG] ======================================\n")
 
         print(f"[FL SongGen] Generating tokens for {duration}s song...")
 
@@ -358,6 +376,16 @@ class SongGenWrapper:
             'bgm_wavs': bgm_wav,
             'melody_is_wav': melody_is_wav,
         }
+
+        # Debug: Log what we're passing to the model (low mem path)
+        print(f"\n[FL SongGen LowMem DEBUG] ========== GENERATION INPUT ==========")
+        print(f"[FL SongGen LowMem DEBUG] Lyrics (first 200 chars): {repr(lyrics[:200]) if lyrics else 'None'}")
+        print(f"[FL SongGen LowMem DEBUG] Description: {repr(description) if description else 'None'}")
+        print(f"[FL SongGen LowMem DEBUG] melody_wavs shape: {pmt_wav.shape if pmt_wav is not None else 'None'}")
+        print(f"[FL SongGen LowMem DEBUG] vocal_wavs shape: {vocal_wav.shape if vocal_wav is not None else 'None'}")
+        print(f"[FL SongGen LowMem DEBUG] bgm_wavs shape: {bgm_wav.shape if bgm_wav is not None else 'None'}")
+        print(f"[FL SongGen LowMem DEBUG] melody_is_wav: {melody_is_wav}")
+        print(f"[FL SongGen LowMem DEBUG] ======================================\n")
 
         print(f"[FL SongGen LowMem] Generating tokens...")
         with torch.autocast(device_type="cuda", dtype=torch.float16):

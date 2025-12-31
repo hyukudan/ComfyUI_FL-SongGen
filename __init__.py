@@ -7,7 +7,17 @@ Generate complete songs with vocals and instrumentals from lyrics!
 
 import sys
 import os
+import warnings
 import importlib.util
+
+# Suppress cosmetic warnings from transformers about GenerationMixin and checkpointing format
+# These need to be set early, before transformers is imported
+warnings.filterwarnings("ignore", message=".*GenerationMixin.*")
+warnings.filterwarnings("ignore", message=".*old version of the checkpointing format.*")
+warnings.filterwarnings("ignore", message=".*doesn't directly inherit from.*")
+warnings.filterwarnings("ignore", message=".*will NOT inherit from.*")
+warnings.filterwarnings("ignore", message=".*_set_gradient_checkpointing.*")
+warnings.filterwarnings("ignore", category=FutureWarning, module="transformers.*")
 
 # Get current directory
 current_dir = os.path.dirname(os.path.abspath(__file__))

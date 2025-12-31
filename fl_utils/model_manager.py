@@ -19,6 +19,10 @@ from omegaconf import OmegaConf
 # Suppress cosmetic warnings from transformers about GenerationMixin and checkpointing format
 warnings.filterwarnings("ignore", message=".*GenerationMixin.*")
 warnings.filterwarnings("ignore", message=".*old version of the checkpointing format.*")
+warnings.filterwarnings("ignore", message=".*doesn't directly inherit from.*")
+warnings.filterwarnings("ignore", message=".*will NOT inherit from.*")
+warnings.filterwarnings("ignore", message=".*_set_gradient_checkpointing.*")
+warnings.filterwarnings("ignore", category=FutureWarning, module="transformers.*")
 
 # Get the fl_utils directory (same directory as this file)
 _FL_UTILS_DIR = os.path.dirname(__file__)

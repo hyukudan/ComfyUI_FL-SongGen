@@ -139,6 +139,14 @@ class CodecLM:
             bgm_wavs = list(bgm_wavs)
         
         texts, audio_qt_embs = self._prepare_tokens_and_attributes(lyrics=lyrics, melody_wavs=melody_wavs, vocal_wavs=vocal_wavs, bgm_wavs=bgm_wavs, melody_is_wav=melody_is_wav)
+
+        # Debug: Log what's being passed to _generate_tokens
+        print(f"\n[CodecLM DEBUG] ========== _generate_tokens INPUT ==========")
+        print(f"[CodecLM DEBUG] texts (lyrics): {texts}")
+        print(f"[CodecLM DEBUG] descriptions: {descriptions}")
+        print(f"[CodecLM DEBUG] audio_qt_embs shape: {audio_qt_embs.shape if audio_qt_embs is not None else 'None'}")
+        print(f"[CodecLM DEBUG] ================================================\n")
+
         tokens = self._generate_tokens(texts, descriptions, audio_qt_embs)
 
         if (tokens == self.lm.eos_token_id).any():

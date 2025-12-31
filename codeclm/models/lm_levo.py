@@ -233,7 +233,13 @@ class LmModel(StreamingModule):
                     if descriptions is not None:
                         attr["text"]["type_info"] = descriptions[i]
                 conditions.append(attr)
-                print("conditions", conditions)
+                # Enhanced debug logging for lyrics/descriptions
+                print(f"\n[LmLevo DEBUG] ========== CONDITION ATTRIBUTES ==========")
+                print(f"[LmLevo DEBUG] Available conditioners: {list(self.condition_provider.conditioners.keys())}")
+                print(f"[LmLevo DEBUG] attr['text']['description'] (LYRICS): {repr(attr.text.get('description', 'NOT SET'))[:200]}")
+                print(f"[LmLevo DEBUG] attr['text']['type_info'] (DESCRIPTION): {repr(attr.text.get('type_info', 'NOT SET'))[:200]}")
+                print(f"[LmLevo DEBUG] Has prompt_audio: {'prompt_audio' in attr.audio}")
+                print(f"[LmLevo DEBUG] =============================================\n")
             if prepare_null_condition:
                 cfg_inference = ClassifierFreeGuidanceDropoutInference() 
                 null_conditions = cfg_inference(conditions, condition_types=["audio", "text"], 

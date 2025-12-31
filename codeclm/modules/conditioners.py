@@ -133,9 +133,22 @@ class QwTokenizerConditioner(TextConditioner):
         print("all structure tokens: ", {self.text_tokenizer.convert_ids_to_tokens(i):i for i in self.struct_token_ids})
         
     def tokenize(self, x: tp.List[tp.Optional[str]]) -> tp.Dict[str, torch.Tensor]:
+        # Debug: Log input before tokenization
+        print(f"\n[QwTokenizerConditioner DEBUG] ========== TOKENIZE INPUT ==========")
+        print(f"[QwTokenizerConditioner DEBUG] Input text (first item, first 300 chars): {repr(x[0][:300]) if x and x[0] else 'None/Empty'}")
+        print(f"[QwTokenizerConditioner DEBUG] Number of inputs: {len(x)}")
+
         x = ['<|im_start|>' + xi if xi is not None else "<|im_start|>" for xi in x]
         # x = [xi if xi is not None else "" for xi in x]
         inputs = self.text_tokenizer(x, return_tensors="pt", padding=True)
+
+        # Debug: Log tokenization result
+        print(f"[QwTokenizerConditioner DEBUG] Tokenized shape: {inputs['input_ids'].shape}")
+        print(f"[QwTokenizerConditioner DEBUG] First 20 token IDs: {inputs['input_ids'][0][:20].tolist()}")
+        decoded = self.text_tokenizer.decode(inputs['input_ids'][0][:50])
+        print(f"[QwTokenizerConditioner DEBUG] Decoded first 50 tokens: {repr(decoded)}")
+        print(f"[QwTokenizerConditioner DEBUG] ===========================================\n")
+
         return inputs
 
     def forward(self, inputs: tp.Dict[str, torch.Tensor]) -> ConditionType:
