@@ -1,46 +1,9 @@
 {
   "id": "895466b0-6554-42a7-973e-bb4c0ed1c11d",
   "revision": 0,
-  "last_node_id": 52,
-  "last_link_id": 37,
+  "last_node_id": 59,
+  "last_link_id": 52,
   "nodes": [
-    {
-      "id": 46,
-      "type": "SaveAudioMP3",
-      "pos": [
-        843.1953658349942,
-        2082.9303482922132
-      ],
-      "size": [
-        479.97202945611434,
-        136
-      ],
-      "flags": {},
-      "order": 6,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "audio",
-          "type": "AUDIO",
-          "link": 32
-        }
-      ],
-      "outputs": [],
-      "properties": {
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {},
-          "version": "7.2.2"
-        },
-        "cnr_id": "comfy-core",
-        "ver": "0.5.1",
-        "Node name for S&R": "SaveAudioMP3"
-      },
-      "widgets_values": [
-        "audio/ComfyUI",
-        "V0"
-      ]
-    },
     {
       "id": 49,
       "type": "FL_SongGen_Generate",
@@ -82,13 +45,14 @@
         }
       ],
       "properties": {
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {}
-        },
         "cnr_id": "comfyui_fl-songgen",
         "ver": "892fcb4a83d15eedce6cdd7260107fa50375c18d",
-        "Node name for S&R": "FL_SongGen_Generate"
+        "Node name for S&R": "FL_SongGen_Generate",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.2.2"
+        }
       },
       "widgets_values": [
         "[intro-short] ; [verse] Hello world.This is a test ; [chorus] Singing along.Making music ; [outro-short]",
@@ -98,152 +62,11 @@
         1.5,
         50,
         "mixed",
-        -1,
+        1359924258,
         "randomize"
       ],
       "color": "#16727c",
       "bgcolor": "#4F0074"
-    },
-    {
-      "id": 50,
-      "type": "FL_SongGen_StyleTransfer",
-      "pos": [
-        395.41204637529034,
-        2501.740553424857
-      ],
-      "size": [
-        400,
-        296
-      ],
-      "flags": {},
-      "order": 5,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "model",
-          "type": "SONGGEN_MODEL",
-          "link": 33
-        },
-        {
-          "name": "reference_audio",
-          "type": "AUDIO",
-          "link": 34
-        }
-      ],
-      "outputs": [
-        {
-          "name": "mixed_audio",
-          "type": "AUDIO",
-          "links": [
-            35
-          ]
-        },
-        {
-          "name": "vocal_audio",
-          "type": "AUDIO",
-          "links": null
-        },
-        {
-          "name": "bgm_audio",
-          "type": "AUDIO",
-          "links": null
-        }
-      ],
-      "properties": {
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {}
-        },
-        "cnr_id": "comfyui_fl-songgen",
-        "ver": "892fcb4a83d15eedce6cdd7260107fa50375c18d",
-        "Node name for S&R": "FL_SongGen_StyleTransfer"
-      },
-      "widgets_values": [
-        "[intro-short] ; [verse] Hello world.This is a test ; [chorus] Singing along.Making music ; [outro-short]",
-        60,
-        0.9,
-        1.5,
-        50,
-        "mixed",
-        -1,
-        "randomize"
-      ],
-      "color": "#16727c",
-      "bgcolor": "#4F0074"
-    },
-    {
-      "id": 52,
-      "type": "SaveAudioMP3",
-      "pos": [
-        833.9801221969743,
-        1699.243684925795
-      ],
-      "size": [
-        479.97202945611434,
-        136
-      ],
-      "flags": {},
-      "order": 7,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "audio",
-          "type": "AUDIO",
-          "link": 37
-        }
-      ],
-      "outputs": [],
-      "properties": {
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {},
-          "version": "7.2.2"
-        },
-        "cnr_id": "comfy-core",
-        "ver": "0.5.1",
-        "Node name for S&R": "SaveAudioMP3"
-      },
-      "widgets_values": [
-        "audio/ComfyUI",
-        "V0"
-      ]
-    },
-    {
-      "id": 31,
-      "type": "SaveAudioMP3",
-      "pos": [
-        865.8286327929193,
-        2502.139800880273
-      ],
-      "size": [
-        479.97202945611434,
-        136
-      ],
-      "flags": {},
-      "order": 8,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "audio",
-          "type": "AUDIO",
-          "link": 35
-        }
-      ],
-      "outputs": [],
-      "properties": {
-        "cnr_id": "comfy-core",
-        "ver": "0.5.1",
-        "Node name for S&R": "SaveAudioMP3",
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {},
-          "version": "7.2.2"
-        }
-      },
-      "widgets_values": [
-        "audio/ComfyUI",
-        "V0"
-      ]
     },
     {
       "id": 51,
@@ -286,13 +109,14 @@
         }
       ],
       "properties": {
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {}
-        },
         "cnr_id": "comfyui_fl-songgen",
         "ver": "892fcb4a83d15eedce6cdd7260107fa50375c18d",
-        "Node name for S&R": "FL_SongGen_AutoStyle"
+        "Node name for S&R": "FL_SongGen_AutoStyle",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.2.2"
+        }
       },
       "widgets_values": [
         "[intro-short] ; [verse] Hello world.This is a test ; [chorus] Singing along.Making music ; [outro-short]",
@@ -302,55 +126,8 @@
         1.5,
         50,
         "mixed",
-        -1,
+        1751839565,
         "randomize"
-      ],
-      "color": "#16727c",
-      "bgcolor": "#4F0074"
-    },
-    {
-      "id": 36,
-      "type": "FL_Audio_Crop",
-      "pos": [
-        -32.40036003886971,
-        2520.522045232838
-      ],
-      "size": [
-        270,
-        82
-      ],
-      "flags": {},
-      "order": 2,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "audio",
-          "type": "AUDIO",
-          "link": 15
-        }
-      ],
-      "outputs": [
-        {
-          "name": "audio",
-          "type": "AUDIO",
-          "links": [
-            34
-          ]
-        }
-      ],
-      "properties": {
-        "cnr_id": "comfyui_fill-nodes",
-        "ver": "487fded794915aa8c9c553413a948b5d4f993e09",
-        "Node name for S&R": "FL_Audio_Crop",
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {},
-          "version": "7.2.2"
-        }
-      },
-      "widgets_values": [
-        "0:30",
-        "0:40"
       ],
       "color": "#16727c",
       "bgcolor": "#4F0074"
@@ -359,8 +136,8 @@
       "id": 35,
       "type": "LoadAudio",
       "pos": [
-        -466.8959776321367,
-        2525.448264387599
+        -467.0620358243836,
+        2501.0338483088763
       ],
       "size": [
         388.97738415585627,
@@ -390,17 +167,98 @@
         }
       },
       "widgets_values": [
-        "HipHop03.wav",
+        "2 - mhm.wav",
         null,
         null
       ]
     },
     {
+      "id": 36,
+      "type": "FL_Audio_Crop",
+      "pos": [
+        -17.138159413017092,
+        2510.051632514627
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 15
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            49,
+            51
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui_fill-nodes",
+        "ver": "487fded794915aa8c9c553413a948b5d4f993e09",
+        "Node name for S&R": "FL_Audio_Crop",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.2.2"
+        }
+      },
+      "widgets_values": [
+        "1:05",
+        "1:15"
+      ],
+      "color": "#16727c",
+      "bgcolor": "#4F0074"
+    },
+    {
+      "id": 58,
+      "type": "PreviewAudio",
+      "pos": [
+        -5.092309332080579,
+        2637.458331315209
+      ],
+      "size": [
+        296.7029611900731,
+        88
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 49
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "cnr_id": "comfy-core",
+        "ver": "0.6.0",
+        "Node name for S&R": "PreviewAudio"
+      },
+      "widgets_values": []
+    },
+    {
       "id": 44,
       "type": "FL_SongGen_ModelLoader",
       "pos": [
-        -125.47345487554173,
-        2089.433654667871
+        -134.4928377960563,
+        2082.276327155916
       ],
       "size": [
         289.38316656724857,
@@ -416,8 +274,8 @@
           "type": "SONGGEN_MODEL",
           "links": [
             31,
-            33,
-            36
+            36,
+            50
           ]
         }
       ],
@@ -435,6 +293,185 @@
         "songgeneration_base_new",
         false,
         false
+      ],
+      "color": "#16727c",
+      "bgcolor": "#4F0074"
+    },
+    {
+      "id": 52,
+      "type": "SaveAudioMP3",
+      "pos": [
+        843.0243736800232,
+        1692.2503603589764
+      ],
+      "size": [
+        479.97202945611434,
+        136
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 37
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.5.1",
+        "Node name for S&R": "SaveAudioMP3",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.2.2"
+        }
+      },
+      "widgets_values": [
+        "audio/ComfyUI",
+        "V0"
+      ]
+    },
+    {
+      "id": 46,
+      "type": "SaveAudioMP3",
+      "pos": [
+        843.5853781666052,
+        2084.1071096375917
+      ],
+      "size": [
+        479.97202945611434,
+        136
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 32
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.5.1",
+        "Node name for S&R": "SaveAudioMP3",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.2.2"
+        }
+      },
+      "widgets_values": [
+        "audio/ComfyUI",
+        "V0"
+      ]
+    },
+    {
+      "id": 56,
+      "type": "SaveAudioMP3",
+      "pos": [
+        868.9873343603814,
+        2491.7513171650994
+      ],
+      "size": [
+        479.97202945611434,
+        136
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 52
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.2.2"
+        },
+        "cnr_id": "comfy-core",
+        "ver": "0.5.1",
+        "Node name for S&R": "SaveAudioMP3"
+      },
+      "widgets_values": [
+        "audio/ComfyUI",
+        "V0"
+      ]
+    },
+    {
+      "id": 59,
+      "type": "FL_SongGen_StyleTransfer",
+      "pos": [
+        357.7715830980706,
+        2491.09955914179
+      ],
+      "size": [
+        400,
+        320
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "SONGGEN_MODEL",
+          "link": 50
+        },
+        {
+          "name": "reference_audio",
+          "type": "AUDIO",
+          "link": 51
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mixed_audio",
+          "type": "AUDIO",
+          "links": [
+            52
+          ]
+        },
+        {
+          "name": "vocal_audio",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "name": "bgm_audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "cnr_id": "comfyui_fl-songgen",
+        "ver": "4a183c82a79077107a8cef92043ada51661c70bb",
+        "Node name for S&R": "FL_SongGen_StyleTransfer"
+      },
+      "widgets_values": [
+        "[intro-short] ; [verse] Hello world.This is a test ; [chorus] Singing along.Making music ; [outro-short]",
+        "",
+        60,
+        0.9,
+        1.5,
+        71,
+        "mixed",
+        -1,
+        "randomize"
       ],
       "color": "#16727c",
       "bgcolor": "#4F0074"
@@ -466,30 +503,6 @@
       "AUDIO"
     ],
     [
-      33,
-      44,
-      0,
-      50,
-      0,
-      "SONGGEN_MODEL"
-    ],
-    [
-      34,
-      36,
-      0,
-      50,
-      1,
-      "AUDIO"
-    ],
-    [
-      35,
-      50,
-      0,
-      31,
-      0,
-      "AUDIO"
-    ],
-    [
       36,
       44,
       0,
@@ -502,6 +515,38 @@
       51,
       0,
       52,
+      0,
+      "AUDIO"
+    ],
+    [
+      49,
+      36,
+      0,
+      58,
+      0,
+      "AUDIO"
+    ],
+    [
+      50,
+      44,
+      0,
+      59,
+      0,
+      "SONGGEN_MODEL"
+    ],
+    [
+      51,
+      36,
+      0,
+      59,
+      1,
+      "AUDIO"
+    ],
+    [
+      52,
+      59,
+      0,
+      56,
       0,
       "AUDIO"
     ]
@@ -527,10 +572,10 @@
     "ue_links": [],
     "links_added_by_ue": [],
     "ds": {
-      "scale": 0.46145498364492765,
+      "scale": 0.5997117742579999,
       "offset": [
-        1052.3753609071075,
-        -1323.527006380868
+        821.383559936399,
+        -1482.8990621570752
       ]
     },
     "frontendVersion": "1.33.13",
