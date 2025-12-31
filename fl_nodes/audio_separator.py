@@ -124,6 +124,11 @@ class FL_SongGen_AudioSeparator:
 
             # Run separation using apply_model (not direct forward call)
             print("[FL SongGen] Running separation (this may take a while)...")
+
+            # Debug: print model's source names
+            if hasattr(separator, 'sources'):
+                print(f"[FL SongGen] Model sources: {separator.sources}")
+
             with torch.no_grad():
                 sources = apply_model(
                     separator, waveform,
@@ -135,13 +140,30 @@ class FL_SongGen_AudioSeparator:
                 )
 
             # Sources shape: [batch, num_sources, channels, samples]
-            # htdemucs sources order: drums, bass, other, vocals
+            print(f"[FL SongGen] Output shape: {sources.shape}")
             sources = sources.squeeze(0)  # Remove batch dim
 
-            drums = sources[0]   # [channels, samples]
-            bass = sources[1]
-            other = sources[2]
-            vocals = sources[3]
+            # Get source names from model to map correctly
+            source_names = getattr(separator, 'sources', ['drums', 'bass', 'other', 'vocals'])
+            print(f"[FL SongGen] Source order: {source_names}")
+
+            # Create a dict to map by name
+            source_dict = {name: sources[i] for i, name in enumerate(source_names)}
+
+            # Extract by name (handle both 'vocal' and 'vocals')
+            vocals = source_dict.get('vocals', source_dict.get('vocal', sources[-1]))
+            drums = source_dict.get('drums', sources[0])
+            bass = source_dict.get('bass', sources[1])
+            other = source_dict.get('other', sources[2])
+
+            # Debug: show audio levels (RMS) for each stem
+            def rms(x):
+                return torch.sqrt(torch.mean(x ** 2)).item()
+            print(f"[FL SongGen] Stem levels (RMS):")
+            print(f"  - Drums: {rms(drums):.6f}")
+            print(f"  - Bass:  {rms(bass):.6f}")
+            print(f"  - Other: {rms(other):.6f}")
+            print(f"  - Vocal: {rms(vocals):.6f}")
 
             # Convert back to original sample rate if needed
             if sample_rate != target_sr:
@@ -150,6 +172,13 @@ class FL_SongGen_AudioSeparator:
                 drums = torchaudio.functional.resample(drums, target_sr, sample_rate)
                 bass = torchaudio.functional.resample(bass, target_sr, sample_rate)
                 other = torchaudio.functional.resample(other, target_sr, sample_rate)
+
+            # Debug: show levels after resample
+            print(f"[FL SongGen] After resample RMS:")
+            print(f"  - Drums: {rms(drums):.6f}")
+            print(f"  - Bass:  {rms(bass):.6f}")
+            print(f"  - Other: {rms(other):.6f}")
+            print(f"  - Vocal: {rms(vocals):.6f}")
 
             # Move to CPU and format for ComfyUI
             def to_audio_dict(tensor, sr):
@@ -162,6 +191,13 @@ class FL_SongGen_AudioSeparator:
             drums_out = to_audio_dict(drums, sample_rate)
             bass_out = to_audio_dict(bass, sample_rate)
             other_out = to_audio_dict(other, sample_rate)
+
+            # Debug: verify output RMS
+            print(f"[FL SongGen] Final output RMS:")
+            print(f"  - vocals_out: {rms(vocals_out['waveform']):.6f}")
+            print(f"  - drums_out:  {rms(drums_out['waveform']):.6f}")
+            print(f"  - bass_out:   {rms(bass_out['waveform']):.6f}")
+            print(f"  - other_out:  {rms(other_out['waveform']):.6f}")
 
             print(f"\n{'='*60}")
             print(f"[FL SongGen Audio Separator] Separation Complete!")

@@ -69,8 +69,8 @@ class FL_SongGen_ModelLoader:
                 "use_flash_attn": (
                     "BOOLEAN",
                     {
-                        "default": True,
-                        "tooltip": "Use Flash Attention for faster generation (requires compatible GPU: RTX 30xx/40xx, A100)"
+                        "default": False,
+                        "tooltip": "Use Flash Attention for faster generation (requires compatible GPU: RTX 30xx/40xx, A100). Disable if generation produces garbage audio."
                     }
                 ),
                 "force_reload": (
