@@ -2,6 +2,7 @@
 from .llama.modeling_llama import LlamaConfig, CausalLMOutputWithPast, BaseModelOutputWithPast, LlamaDecoderLayer, LlamaRMSNorm
 from .llama.modeling_llama import LlamaForCausalLM as LlamaForCausalLM_base
 from .llama.modeling_llama import LlamaModel as LlamaModel_base
+from transformers.generation.utils import GenerationMixin
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -11,7 +12,7 @@ Wrap the original Llama model for potential customized changes.
 """
 
 """main class"""
-class CausalLM(LlamaForCausalLM_base):
+class CausalLM(LlamaForCausalLM_base, GenerationMixin):
     def __init__(self, config):
         super().__init__(config)
         self.model = LmModel(config)
