@@ -127,10 +127,10 @@ class FL_SongGen_ModelLoader:
             print(f"\n{'='*60}")
             print(f"[FL SongGen] ERROR: Model files not found!")
             print(f"{'='*60}")
-            print(f"Please download the model from HuggingFace:")
-            print(f"https://huggingface.co/aslp-lab/SongGeneration")
+            print(f"Models download automatically on first use.")
+            print(f"Source: https://huggingface.co/hyukudan/SongGen-safetensors")
             print(f"\nExpected location: ComfyUI/models/songgen/{model_variant}/")
-            print(f"Required files: config.yaml, model.pt")
+            print(f"Required files: config.yaml, model.safetensors")
             print(f"{'='*60}\n")
             raise e
 

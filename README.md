@@ -64,12 +64,13 @@ Models download automatically on first use to `ComfyUI/models/songgen/`.
 
 | Model | Max Duration | VRAM | Languages |
 |-------|:------------:|:----:|-----------|
-| `songgeneration_base` | 2m 30s | 10-16 GB | Chinese |
 | `songgeneration_base_new` | 2m 30s | 10-16 GB | Chinese, English |
 | `songgeneration_base_full` | 4m 30s | 12-18 GB | Chinese, English |
 | `songgeneration_large` | 4m 30s | 22-28 GB | Chinese, English |
 
 > **Note:** VRAM range shows low memory mode vs normal mode. Enable `low_mem` in the Model Loader for reduced VRAM usage.
+
+Models are served in [safetensors format](https://huggingface.co/hyukudan/SongGen-safetensors) for faster loading and improved security.
 
 ---
 

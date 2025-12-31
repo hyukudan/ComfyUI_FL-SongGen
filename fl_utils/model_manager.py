@@ -52,24 +52,18 @@ check_model_integrity = _paths.check_model_integrity
 verify_file_integrity = _paths.verify_file_integrity
 
 # Model variant configurations with HuggingFace repo info
+# Primary repo uses safetensors format for faster loading and better security
+SAFETENSORS_HF_REPO = "hyukudan/SongGen-safetensors"
+
 MODEL_VARIANTS = {
-    "songgeneration_base": {
+    "songgeneration_base_new": {
         "max_duration": 150,  # 2m30s in seconds
         "vram_normal": 16,  # GB
         "vram_low": 10,
-        "languages": ["zh"],
-        "description": "Base model - Chinese only, 2m30s max",
-        "hf_repo": "tencent/SongGeneration",
-        "hf_subfolder": "ckpt/songgeneration_base",
-    },
-    "songgeneration_base_new": {
-        "max_duration": 150,
-        "vram_normal": 16,
-        "vram_low": 10,
         "languages": ["zh", "en"],
-        "description": "Base model - Chinese + English, 2m30s max",
-        "hf_repo": "lglg666/SongGeneration-base-new",
-        "hf_subfolder": None,
+        "description": "Base model - Chinese + English, 2m30s max, lower VRAM",
+        "hf_repo": SAFETENSORS_HF_REPO,
+        "hf_subfolder": "songgeneration_base_new",
     },
     "songgeneration_base_full": {
         "max_duration": 270,  # 4m30s
@@ -77,8 +71,8 @@ MODEL_VARIANTS = {
         "vram_low": 12,
         "languages": ["zh", "en"],
         "description": "Full base model - Chinese + English, 4m30s max",
-        "hf_repo": "lglg666/SongGeneration-base-full",
-        "hf_subfolder": None,
+        "hf_repo": SAFETENSORS_HF_REPO,
+        "hf_subfolder": "songgeneration_base_full",
     },
     "songgeneration_large": {
         "max_duration": 270,
@@ -86,8 +80,8 @@ MODEL_VARIANTS = {
         "vram_low": 22,
         "languages": ["zh", "en"],
         "description": "Large model - Best quality, 4m30s max",
-        "hf_repo": "lglg666/SongGeneration-large",
-        "hf_subfolder": None,
+        "hf_repo": SAFETENSORS_HF_REPO,
+        "hf_subfolder": "songgeneration_large",
     },
     # v1.5 models (coming soon - placeholders for future support)
     # Uncomment when Tencent releases v1.5 models
@@ -185,6 +179,7 @@ def _register_omegaconf_resolvers():
 def _download_model_files(variant: str) -> bool:
     """
     Download model files from HuggingFace.
+    Downloads safetensors format (faster loading, more secure).
 
     Args:
         variant: Model variant name
@@ -212,8 +207,8 @@ def _download_model_files(variant: str) -> bool:
     print(f"[FL SongGen] To: {target_dir}")
 
     try:
-        # Download only the specific files we need: config.yaml and model.pt
-        for filename in ["config.yaml", "model.pt"]:
+        # Download safetensors format (preferred) - config.yaml and model.safetensors
+        for filename in ["config.yaml", "model.safetensors"]:
             target_file = target_dir / filename
             if target_file.exists():
                 print(f"[FL SongGen] {filename} already exists, skipping...")
@@ -227,7 +222,7 @@ def _download_model_files(variant: str) -> bool:
                 filepath = filename
 
             print(f"[FL SongGen] Downloading {filepath}...")
-            hf_hub_download(
+            downloaded_path = hf_hub_download(
                 repo_id=hf_repo,
                 filename=filepath,
                 local_dir=str(target_dir),
@@ -240,10 +235,15 @@ def _download_model_files(variant: str) -> bool:
                 src = target_dir / filepath
                 if src.exists() and src != target_file:
                     shutil.move(str(src), str(target_file))
-                    # Clean up empty subfolder
-                    subfolder_path = target_dir / hf_subfolder.split('/')[0]
-                    if subfolder_path.exists() and subfolder_path.is_dir():
-                        shutil.rmtree(str(subfolder_path))
+                    # Clean up empty subfolder structure
+                    subfolder_parts = hf_subfolder.split('/')
+                    for i in range(len(subfolder_parts)):
+                        subfolder_path = target_dir / '/'.join(subfolder_parts[:i+1])
+                        if subfolder_path.exists() and subfolder_path.is_dir():
+                            try:
+                                subfolder_path.rmdir()  # Only removes if empty
+                            except OSError:
+                                pass
 
         # Verify downloaded files
         integrity_check = check_model_integrity(variant)
@@ -254,7 +254,7 @@ def _download_model_files(variant: str) -> bool:
             print(f"[FL SongGen] Try deleting the files and re-downloading.")
             return False
 
-        print(f"[FL SongGen] Model download complete!")
+        print(f"[FL SongGen] Model download complete! (safetensors format)")
         return True
 
     except Exception as e:
@@ -411,7 +411,16 @@ def load_model(
     # Load configuration
     variant_dir = get_model_variant_dir(variant)
     cfg_path = variant_dir / "config.yaml"
-    ckpt_path = variant_dir / "model.pt"
+
+    # Determine model file path - prefer safetensors
+    safetensors_path = variant_dir / "model.safetensors"
+    pt_path = variant_dir / "model.pt"
+    if safetensors_path.exists():
+        ckpt_path = safetensors_path
+        use_safetensors = True
+    else:
+        ckpt_path = pt_path
+        use_safetensors = False
 
     cfg = OmegaConf.load(str(cfg_path))
     cfg.lm.use_flash_attn_2 = use_flash_attn
@@ -472,6 +481,7 @@ def load_model(
         "device": device,
         "low_mem": low_mem,
         "use_flash_attn": use_flash_attn,
+        "use_safetensors": use_safetensors,
     }
 
     if low_mem:
@@ -483,7 +493,7 @@ def load_model(
             progress_callback(1, 1)  # Complete immediately for low_mem mode
     else:
         # Normal mode: load everything now
-        model_info = _load_full_model(model_info, cfg, ckpt_path, device, progress_callback)
+        model_info = _load_full_model(model_info, cfg, ckpt_path, device, use_safetensors, progress_callback)
 
     # Load auto prompts if available
     auto_prompts_path = get_auto_prompts_path()
@@ -506,9 +516,10 @@ def _load_full_model(
     cfg: OmegaConf,
     ckpt_path: Path,
     device: str,
+    use_safetensors: bool = False,
     progress_callback: Optional[callable] = None
 ) -> dict:
-    """Load full model (non-low-memory mode)."""
+    """Load full model. Supports safetensors (faster) and legacy .pt formats."""
     from codeclm.models import builders, CodecLM
 
     # Total steps: audio_tokenizer, separate_tokenizer, language_model, create_wrapper
@@ -545,7 +556,19 @@ def _load_full_model(
     # Load LM
     print("[FL SongGen] Loading language model...")
     audiolm = builders.get_lm_model(cfg)
-    checkpoint = torch.load(str(ckpt_path), map_location='cpu')
+
+    # Load checkpoint - use safetensors if available (faster with memory mapping)
+    if use_safetensors:
+        try:
+            from safetensors.torch import load_file
+            print("[FL SongGen] Using safetensors format (memory-mapped loading)...")
+            checkpoint = load_file(str(ckpt_path), device='cpu')
+        except ImportError:
+            print("[FL SongGen] WARNING: safetensors not installed, using torch.load")
+            checkpoint = torch.load(str(ckpt_path), map_location='cpu')
+    else:
+        checkpoint = torch.load(str(ckpt_path), map_location='cpu')
+
     audiolm_state_dict = {
         k.replace('audiolm.', ''): v
         for k, v in checkpoint.items()

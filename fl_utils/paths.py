@@ -160,29 +160,41 @@ def check_checkpoint_files() -> dict:
 def check_model_files(variant: str) -> dict:
     """
     Check if required model files exist for a variant.
+    Supports both safetensors (preferred) and legacy .pt formats.
 
     Returns:
-        dict with 'exists' bool and 'missing' list of missing files
+        dict with 'exists' bool, 'missing' list, and 'format' (safetensors or pt)
     """
     variant_dir = get_model_variant_dir(variant)
-    required_files = ['config.yaml', 'model.pt']
 
     missing = []
-    for f in required_files:
-        if not (variant_dir / f).exists():
-            missing.append(f)
+    model_format = None
+
+    # Check config (always required)
+    if not (variant_dir / 'config.yaml').exists():
+        missing.append('config.yaml')
+
+    # Check model file - prefer safetensors, fallback to .pt
+    if (variant_dir / 'model.safetensors').exists():
+        model_format = 'safetensors'
+    elif (variant_dir / 'model.pt').exists():
+        model_format = 'pt'
+    else:
+        missing.append('model.safetensors')  # Request safetensors by default
 
     return {
         'exists': len(missing) == 0,
         'missing': missing,
-        'path': variant_dir
+        'path': variant_dir,
+        'format': model_format
     }
 
 
 # Minimum expected file sizes in bytes (to detect corrupted downloads)
 # These are conservative minimums - actual files are much larger
 MIN_FILE_SIZES = {
-    'model.pt': 100 * 1024 * 1024,  # 100 MB minimum (actual ~2-5 GB)
+    'model.safetensors': 100 * 1024 * 1024,  # 100 MB minimum (actual ~11-20 GB)
+    'model.pt': 100 * 1024 * 1024,  # 100 MB minimum (legacy format)
     'config.yaml': 1024,  # 1 KB minimum
     'htdemucs.pth': 50 * 1024 * 1024,  # 50 MB minimum
 }
@@ -226,23 +238,43 @@ def verify_file_integrity(file_path: Path, file_type: str = None) -> dict:
 def check_model_integrity(variant: str) -> dict:
     """
     Check integrity of model files for a variant.
+    Supports both safetensors (preferred) and legacy .pt formats.
 
     Returns:
-        dict with 'valid' bool and list of 'issues' if any
+        dict with 'valid' bool, list of 'issues', and 'format' if any
     """
     variant_dir = get_model_variant_dir(variant)
     issues = []
+    model_format = None
 
-    for filename in ['config.yaml', 'model.pt']:
-        file_path = variant_dir / filename
-        result = verify_file_integrity(file_path, filename)
+    # Check config
+    config_path = variant_dir / 'config.yaml'
+    result = verify_file_integrity(config_path, 'config.yaml')
+    if not result['valid']:
+        issues.append(f"config.yaml: {result['issue']}")
+
+    # Check model file - prefer safetensors
+    safetensors_path = variant_dir / 'model.safetensors'
+    pt_path = variant_dir / 'model.pt'
+
+    if safetensors_path.exists():
+        result = verify_file_integrity(safetensors_path, 'model.safetensors')
+        model_format = 'safetensors'
         if not result['valid']:
-            issues.append(f"{filename}: {result['issue']}")
+            issues.append(f"model.safetensors: {result['issue']}")
+    elif pt_path.exists():
+        result = verify_file_integrity(pt_path, 'model.pt')
+        model_format = 'pt'
+        if not result['valid']:
+            issues.append(f"model.pt: {result['issue']}")
+    else:
+        issues.append("model.safetensors: File does not exist")
 
     return {
         'valid': len(issues) == 0,
         'issues': issues,
-        'path': variant_dir
+        'path': variant_dir,
+        'format': model_format
     }
 
 
