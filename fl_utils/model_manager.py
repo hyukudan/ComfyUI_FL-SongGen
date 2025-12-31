@@ -48,6 +48,8 @@ check_bundled_files = _paths.check_bundled_files
 check_checkpoint_files = _paths.check_checkpoint_files
 setup_bundled_imports = _paths.setup_bundled_imports
 get_bundled_third_party_path = _paths.get_bundled_third_party_path
+check_model_integrity = _paths.check_model_integrity
+verify_file_integrity = _paths.verify_file_integrity
 
 # Model variant configurations with HuggingFace repo info
 MODEL_VARIANTS = {
@@ -86,7 +88,36 @@ MODEL_VARIANTS = {
         "description": "Large model - Best quality, 4m30s max",
         "hf_repo": "lglg666/SongGeneration-large",
         "hf_subfolder": None,
-    }
+    },
+    # v1.5 models (coming soon - placeholders for future support)
+    # Uncomment when Tencent releases v1.5 models
+    # "songgeneration_v1.5_small": {
+    #     "max_duration": 120,  # 2m
+    #     "vram_normal": 12,
+    #     "vram_low": 8,
+    #     "languages": ["zh", "en", "es", "ja"],
+    #     "description": "v1.5 Small - Multi-language, 2m max",
+    #     "hf_repo": None,  # TBA
+    #     "hf_subfolder": None,
+    # },
+    # "songgeneration_v1.5_base": {
+    #     "max_duration": 270,
+    #     "vram_normal": 18,
+    #     "vram_low": 12,
+    #     "languages": ["zh", "en", "es", "ja"],
+    #     "description": "v1.5 Base - Multi-language, 4m30s max",
+    #     "hf_repo": None,  # TBA
+    #     "hf_subfolder": None,
+    # },
+    # "songgeneration_v1.5_large": {
+    #     "max_duration": 270,
+    #     "vram_normal": 28,
+    #     "vram_low": 22,
+    #     "languages": ["zh", "en", "es", "ja"],
+    #     "description": "v1.5 Large - Multi-language, best quality",
+    #     "hf_repo": None,  # TBA
+    #     "hf_subfolder": None,
+    # },
 }
 
 # Checkpoints HuggingFace repo - contains only model weights (no code)
@@ -213,6 +244,15 @@ def _download_model_files(variant: str) -> bool:
                     subfolder_path = target_dir / hf_subfolder.split('/')[0]
                     if subfolder_path.exists() and subfolder_path.is_dir():
                         shutil.rmtree(str(subfolder_path))
+
+        # Verify downloaded files
+        integrity_check = check_model_integrity(variant)
+        if not integrity_check['valid']:
+            print(f"[FL SongGen] WARNING: Downloaded files may be corrupted:")
+            for issue in integrity_check['issues']:
+                print(f"[FL SongGen]   - {issue}")
+            print(f"[FL SongGen] Try deleting the files and re-downloading.")
+            return False
 
         print(f"[FL SongGen] Model download complete!")
         return True
@@ -344,10 +384,12 @@ def load_model(
     # Ensure model files exist (download if necessary)
     if not ensure_model_files(variant):
         file_check = check_model_files(variant)
-        raise FileNotFoundError(
-            f"Model files missing for {variant} at {file_check['path']}. "
-            f"Missing: {file_check['missing']}. "
-            "Automatic download failed. Please download manually from HuggingFace."
+        # Import here to avoid circular imports
+        from fl_utils.logging import ModelNotFoundError
+        raise ModelNotFoundError(
+            variant=variant,
+            missing_files=file_check['missing'],
+            model_path=str(file_check['path'])
         )
 
     print(f"[FL SongGen] Loading model: {variant}")
@@ -484,8 +526,7 @@ def _load_full_model(
     audio_tokenizer = builders.get_audio_tokenizer_model(cfg.audio_tokenizer_checkpoint, cfg)
     if audio_tokenizer is not None:
         audio_tokenizer = audio_tokenizer.eval()
-        if device == "cuda":
-            audio_tokenizer = audio_tokenizer.cuda()
+        audio_tokenizer = audio_tokenizer.to(device)
     model_info["audio_tokenizer"] = audio_tokenizer
     update_progress()
 
@@ -495,8 +536,7 @@ def _load_full_model(
         separate_tokenizer = builders.get_audio_tokenizer_model(cfg.audio_tokenizer_checkpoint_sep, cfg)
         if separate_tokenizer is not None:
             separate_tokenizer = separate_tokenizer.eval()
-            if device == "cuda":
-                separate_tokenizer = separate_tokenizer.cuda()
+            separate_tokenizer = separate_tokenizer.to(device)
     else:
         separate_tokenizer = None
     model_info["separate_tokenizer"] = separate_tokenizer
@@ -559,8 +599,11 @@ def _load_full_model(
     audiolm.load_state_dict(audiolm_state_dict, strict=False)
     audiolm = audiolm.eval()
 
+    # Move to device and use float16 for GPU (faster), float32 for CPU
     if device == "cuda":
-        audiolm = audiolm.cuda().to(torch.float16)
+        audiolm = audiolm.to(device).to(torch.float16)
+    else:
+        audiolm = audiolm.to(device)
     update_progress()
 
     # Create CodecLM wrapper
@@ -658,10 +701,8 @@ def load_separator(device: str = "cuda") -> Any:
     # Auto-download if missing
     if not dm_model_path.exists():
         if not _download_demucs_model():
-            raise FileNotFoundError(
-                f"Demucs model not found at {dm_model_path}. "
-                "Automatic download failed. Please download manually."
-            )
+            from fl_utils.logging import DemucsNotAvailableError
+            raise DemucsNotAvailableError(model_path=str(dm_model_path))
 
     demucs_model = get_model_from_yaml(str(dm_config_path), str(dm_model_path))
 

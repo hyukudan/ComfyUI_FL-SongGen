@@ -10,6 +10,18 @@ import os
 import warnings
 import importlib.util
 
+# Fix for Python 3.12+: pkg_resources.packaging was removed
+# CLIP (via k-diffusion) tries to import it, causing ImportError
+# This monkey-patch must run BEFORE any module loads CLIP
+try:
+    import packaging
+    import pkg_resources
+    # Inject packaging into pkg_resources if not present
+    if not hasattr(pkg_resources, 'packaging'):
+        pkg_resources.packaging = packaging
+except ImportError:
+    pass  # packaging not installed, will be handled by requirements
+
 # Suppress cosmetic warnings from transformers about GenerationMixin and checkpointing format
 # These need to be set early, before transformers is imported
 warnings.filterwarnings("ignore", message=".*GenerationMixin.*")
@@ -103,7 +115,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 }
 
 # Version info
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 # ASCII banner
 ascii_art = """

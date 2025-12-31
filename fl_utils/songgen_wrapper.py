@@ -7,14 +7,12 @@ import gc
 import os
 import re
 import sys
-import tempfile
 import importlib.util
 from typing import Optional, Tuple, Callable, Any, Dict
 
 import numpy as np
 import torch
 import torchaudio
-import soundfile as sf
 
 # Regex to filter lyrics - keeps letters, numbers, whitespace, brackets, hyphens, and CJK characters
 # Removes punctuation like commas, apostrophes, quotes, etc. that the model wasn't trained on
@@ -118,6 +116,12 @@ class SongGenWrapper:
         if duration > self.max_duration:
             print(f"[FL SongGen] Duration {duration}s exceeds max {self.max_duration}s, clamping.")
             duration = self.max_duration
+
+        # Check for characters that will be removed and warn user
+        removed_chars = set(LYRICS_FILTER_REGEX.findall(lyrics))
+        if removed_chars:
+            char_list = ", ".join(repr(c) for c in sorted(removed_chars))
+            print(f"[FL SongGen] WARNING: Removing unsupported characters from lyrics: {char_list}")
 
         # Clean lyrics - remove unsupported punctuation and normalize spaces
         lyrics = LYRICS_FILTER_REGEX.sub("", lyrics)
@@ -513,6 +517,7 @@ class SongGenWrapper:
     def _separate_audio(self, audio: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Separate audio into full, vocal, and bgm using Demucs.
+        Optimized to work directly in memory without temporary files.
 
         Args:
             audio: Audio tensor [B, C, S] at 48kHz
@@ -524,59 +529,56 @@ class SongGenWrapper:
         _model_manager = _import_from_fl_utils("model_manager", "model_manager")
         load_separator = _model_manager.load_separator
 
-        # Ensure 48kHz
-        if audio.shape[-1] < 48000 * 10:
+        # Ensure 48kHz and limit to 10 seconds
+        target_length = 48000 * 10
+        if audio.shape[-1] < target_length:
             # Pad to 10 seconds
-            padding = torch.zeros(audio.shape[0], audio.shape[1], 48000 * 10 - audio.shape[-1])
-            audio = torch.cat([audio, padding], dim=-1)
-        elif audio.shape[-1] > 48000 * 10:
-            audio = audio[..., :48000 * 10]
-
-        # Use a simpler separation: vocal = audio - bgm estimation
-        # For proper separation, we'd need Demucs which requires file I/O
-        # Let's save to temp file and use the separator
+            padding = torch.zeros(audio.shape[0], audio.shape[1], target_length - audio.shape[-1])
+            audio = torch.cat([audio, padding.to(audio.device)], dim=-1)
+        elif audio.shape[-1] > target_length:
+            audio = audio[..., :target_length]
 
         separator = load_separator(self.device)
 
-        # Save to temp file
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
-            temp_path = f.name
+        # Prepare audio for Demucs: normalize by reference
+        wav = audio.squeeze(0)  # Remove batch dim: [C, S]
+        ref = wav.mean(0)
+        wav_normalized = wav - ref.mean()
+        wav_normalized = wav_normalized / (ref.std() + 1e-8)
 
-        try:
-            # Use soundfile instead of torchaudio to avoid TorchCodec issues on Windows
-            audio_np = audio.squeeze(0).cpu().numpy().T  # (channels, samples) -> (samples, channels)
-            sf.write(temp_path, audio_np, 48000)
+        # Import apply_model from bundled demucs
+        from third_party.demucs.models.apply import apply_model
 
-            # Run separation
-            with tempfile.TemporaryDirectory() as tmp_dir:
-                separator.separate(temp_path, tmp_dir, device=torch.device(self.device))
+        # Run separation directly in memory (no file I/O)
+        device = torch.device(self.device)
+        with torch.no_grad():
+            sources = apply_model(
+                separator,
+                wav_normalized[None],  # Add batch dim
+                device=device,
+                shifts=1,
+                split=True,
+                overlap=0.25,
+                progress=False,
+                num_workers=0
+            )[0]  # Remove batch dim
 
-                # Get the base name of the temp file (without extension) to find output files
-                # The separator names output as {input_basename}_{stem}.flac
-                # Note: htdemucs uses 'vocal' (singular), not 'vocals'
-                temp_basename = os.path.splitext(os.path.basename(temp_path))[0]
-                vocals_path = os.path.join(tmp_dir, f"{temp_basename}_vocal.flac")
+        # Denormalize
+        sources = sources * (ref.std() + 1e-8)
+        sources = sources + ref.mean()
 
-                # Load separated audio using soundfile
-                vocals_np, sr = sf.read(vocals_path)
-                # Convert from (samples, channels) to (channels, samples)
-                if vocals_np.ndim == 1:
-                    vocals = torch.from_numpy(vocals_np).unsqueeze(0).float()
-                else:
-                    vocals = torch.from_numpy(vocals_np.T).float()
-                if vocals.shape[-1] > 48000 * 10:
-                    vocals = vocals[..., :48000 * 10]
+        # sources shape: [num_sources, channels, samples]
+        # htdemucs sources are: ['drums', 'bass', 'other', 'vocal']
+        # We need vocal (index 3) and bgm (sum of drums, bass, other)
+        vocal_idx = separator.sources.index('vocal') if 'vocal' in separator.sources else 3
+        vocals = sources[vocal_idx]  # [C, S]
 
-            # BGM = full - vocals
-            full_audio = audio.squeeze(0)[:, :vocals.shape[-1]]
-            bgm = full_audio - vocals
+        # BGM = full - vocals (simpler and more accurate for our use case)
+        full_audio = audio.squeeze(0)[:, :vocals.shape[-1]]
+        bgm = full_audio - vocals
 
-            return (
-                audio[:, :, :48000 * 10],
-                vocals.unsqueeze(0),
-                bgm.unsqueeze(0)
-            )
-
-        finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+        return (
+            audio[:, :, :target_length],
+            vocals.unsqueeze(0),
+            bgm.unsqueeze(0)
+        )

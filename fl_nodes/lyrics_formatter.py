@@ -13,6 +13,11 @@ LYRICS_FILTER_REGEX = re.compile(
 )
 
 
+def get_removed_characters(text: str) -> set:
+    """Find all characters that will be removed by the lyrics filter."""
+    return set(LYRICS_FILTER_REGEX.findall(text))
+
+
 def clean_lyrics_line(line: str) -> str:
     """Clean a single lyrics line by removing unsupported punctuation."""
     cleaned = LYRICS_FILTER_REGEX.sub("", line)
@@ -171,6 +176,19 @@ class FL_SongGen_LyricsFormatter:
         Returns:
             Formatted lyrics string ready for generation
         """
+        # Collect all text inputs to check for removed characters
+        all_texts = [verse_1, chorus_1, verse_2, chorus_2, bridge, verse_3, chorus_3, raw_lyrics]
+        all_removed = set()
+        for text in all_texts:
+            if text.strip():
+                all_removed.update(get_removed_characters(text))
+
+        # Show warning if characters will be removed
+        if all_removed:
+            char_list = ", ".join(repr(c) for c in sorted(all_removed))
+            print(f"[FL SongGen Lyrics] WARNING: These characters will be removed: {char_list}")
+            print(f"[FL SongGen Lyrics] The model only supports letters, numbers, spaces, and CJK characters.")
+
         # If raw lyrics provided, use those
         if raw_lyrics.strip():
             print(f"[FL SongGen Lyrics] Using raw lyrics input")

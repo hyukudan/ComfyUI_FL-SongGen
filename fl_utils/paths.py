@@ -179,6 +179,73 @@ def check_model_files(variant: str) -> dict:
     }
 
 
+# Minimum expected file sizes in bytes (to detect corrupted downloads)
+# These are conservative minimums - actual files are much larger
+MIN_FILE_SIZES = {
+    'model.pt': 100 * 1024 * 1024,  # 100 MB minimum (actual ~2-5 GB)
+    'config.yaml': 1024,  # 1 KB minimum
+    'htdemucs.pth': 50 * 1024 * 1024,  # 50 MB minimum
+}
+
+
+def verify_file_integrity(file_path: Path, file_type: str = None) -> dict:
+    """
+    Basic integrity check for downloaded files.
+    Verifies file exists and has reasonable size.
+
+    Args:
+        file_path: Path to file to verify
+        file_type: Optional type hint for size validation
+
+    Returns:
+        dict with 'valid' bool, 'size' in bytes, and 'issue' if any
+    """
+    if not file_path.exists():
+        return {'valid': False, 'size': 0, 'issue': 'File does not exist'}
+
+    file_size = file_path.stat().st_size
+
+    if file_size == 0:
+        return {'valid': False, 'size': 0, 'issue': 'File is empty (0 bytes)'}
+
+    # Check minimum size if we know the file type
+    if file_type is None:
+        file_type = file_path.name
+
+    min_size = MIN_FILE_SIZES.get(file_type, 0)
+    if min_size > 0 and file_size < min_size:
+        return {
+            'valid': False,
+            'size': file_size,
+            'issue': f'File too small ({file_size / 1024 / 1024:.1f} MB < {min_size / 1024 / 1024:.1f} MB expected)'
+        }
+
+    return {'valid': True, 'size': file_size, 'issue': None}
+
+
+def check_model_integrity(variant: str) -> dict:
+    """
+    Check integrity of model files for a variant.
+
+    Returns:
+        dict with 'valid' bool and list of 'issues' if any
+    """
+    variant_dir = get_model_variant_dir(variant)
+    issues = []
+
+    for filename in ['config.yaml', 'model.pt']:
+        file_path = variant_dir / filename
+        result = verify_file_integrity(file_path, filename)
+        if not result['valid']:
+            issues.append(f"{filename}: {result['issue']}")
+
+    return {
+        'valid': len(issues) == 0,
+        'issues': issues,
+        'path': variant_dir
+    }
+
+
 # Legacy aliases for compatibility
 def get_runtime_dir() -> Path:
     """Legacy: Get checkpoints directory."""

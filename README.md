@@ -2,7 +2,7 @@
 
 AI-powered song generation nodes for ComfyUI based on Tencent's SongGeneration (LeVo) model. Generate complete songs with vocals and instrumentals from lyrics.
 
-[![SongGeneration](https://img.shields.io/badge/SongGeneration-Original%20Repo-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/AslpLab/SongGeneration)
+[![SongGeneration](https://img.shields.io/badge/SongGeneration-Original%20Repo-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/tencent-ailab/SongGeneration)
 [![Patreon](https://img.shields.io/badge/Patreon-Support%20Me-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/Machinedelusions)
 
 ![Workflow Preview](assets/example.png)
@@ -276,6 +276,20 @@ You can optionally provide a **text description** alongside reference audio to f
 
 ---
 
+## Changelog
+
+### v1.1.0
+- **Fix:** Python 3.12+ compatibility (pkg_resources.packaging issue)
+- **Fix:** Proper device handling (CUDA/CPU) instead of hardcoded CUDA
+- **Fix:** Corrected link to official Tencent repository
+- **New:** Lyrics validation with warnings when unsupported characters are removed
+- **New:** Custom error messages with helpful troubleshooting guidance
+- **New:** File integrity verification for downloaded models
+- **Optimized:** Audio separation now works in-memory (no temporary files)
+- **Prepared:** Placeholders for upcoming v1.5 multi-language models
+
+---
+
 ## License
 
 Apache 2.0
@@ -284,4 +298,4 @@ Apache 2.0
 
 ## Credits
 
-Based on [SongGeneration (LeVo)](https://github.com/AslpLab/SongGeneration) by Tencent AI Lab.
+Based on [SongGeneration (LeVo)](https://github.com/tencent-ailab/SongGeneration) by Tencent AI Lab.
