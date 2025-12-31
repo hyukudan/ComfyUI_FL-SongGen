@@ -116,10 +116,24 @@ class FL_SongGen_AudioSeparator:
             # Move to device
             waveform = waveform.to(device)
 
-            # Run separation
+            # Import apply_model from demucs
+            import sys
+            demucs_path = os.path.join(_PACKAGE_ROOT, "third_party", "demucs", "models")
+            if demucs_path not in sys.path:
+                sys.path.insert(0, demucs_path)
+            from apply import apply_model
+
+            # Run separation using apply_model (not direct forward call)
             print("[FL SongGen] Running separation (this may take a while)...")
             with torch.no_grad():
-                sources = separator(waveform)
+                sources = apply_model(
+                    separator, waveform,
+                    device=device,
+                    shifts=1,
+                    split=True,
+                    overlap=0.25,
+                    progress=True
+                )
 
             # Sources shape: [batch, num_sources, channels, samples]
             # htdemucs sources order: drums, bass, other, vocals
