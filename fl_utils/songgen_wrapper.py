@@ -132,12 +132,12 @@ class SongGenWrapper:
         if self.low_mem:
             return self._generate_lowmem(
                 lyrics, description, prompt_audio, auto_style,
-                duration, temperature, cfg_coef, top_k, gen_type
+                duration, temperature, cfg_coef, top_k, top_p, gen_type
             )
         else:
             return self._generate_normal(
                 lyrics, description, prompt_audio, auto_style,
-                duration, temperature, cfg_coef, top_k, gen_type
+                duration, temperature, cfg_coef, top_k, top_p, gen_type
             )
 
     def _generate_normal(
@@ -150,6 +150,7 @@ class SongGenWrapper:
         temperature: float,
         cfg_coef: float,
         top_k: int,
+        top_p: float,
         gen_type: str,
     ) -> Tuple[dict, Optional[dict], Optional[dict]]:
         """Normal generation mode (sufficient VRAM)."""
@@ -281,6 +282,7 @@ class SongGenWrapper:
         temperature: float,
         cfg_coef: float,
         top_k: int,
+        top_p: float,
         gen_type: str,
     ) -> Tuple[dict, Optional[dict], Optional[dict]]:
         """Low memory generation mode (limited VRAM)."""
