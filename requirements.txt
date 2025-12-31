@@ -32,3 +32,4 @@ ema-pytorch>=0.3.0
 auraloss>=0.4.0
 pedalboard>=0.8.0
 PyYAML>=6.0
+protobuf>=4.21.0
